@@ -10,7 +10,7 @@ public class PowerConfig {
     public int MEMBER = 20;
 
     @SerializedName("claimWeight")
-    public int CLAIM_WEIGHT = 5;
+    public int CLAIM_WEIGHT = 0;
 
     @SerializedName("deathPenalty")
     public int DEATH_PENALTY = 10;
@@ -23,6 +23,6 @@ public class PowerConfig {
         public int TICKS = 12000;
 
         @SerializedName("reward")
-        public int REWARD = 1;
+        public int REWARD = 0;
     }
 }

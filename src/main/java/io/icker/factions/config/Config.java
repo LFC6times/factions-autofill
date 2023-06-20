@@ -61,11 +61,11 @@ public class Config {
 
     @SerializedName("safe")
     @Nullable
-    public SafeConfig SAFE = new SafeConfig();
+    public SafeConfig SAFE = null;
 
     @SerializedName("home")
     @Nullable
-    public HomeConfig HOME = new HomeConfig();
+    public HomeConfig HOME = null;
 
     @SerializedName("display")
     public DisplayConfig DISPLAY = new DisplayConfig();

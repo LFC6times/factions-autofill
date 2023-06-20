@@ -25,8 +25,7 @@ public class AdminCommand implements Command {
         ServerPlayerEntity player = context.getSource().getPlayer();
 
         User user = User.get(player.getUuid());
-        boolean bypass = !user.bypass;
-        user.bypass = bypass;
+        user.bypass = !user.bypass;
 
         new Message("Successfully toggled claim bypass")
                 .filler("·")

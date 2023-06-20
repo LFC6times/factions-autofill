@@ -17,41 +17,34 @@ import java.util.function.Function;
 public class SerializerRegistry {
     private static final HashMap<Class<?>, Serializer<?, ? extends NbtElement>> registry = new HashMap<Class<?>, Serializer<?, ? extends NbtElement>>();
 
-    private static class Serializer<T, E extends NbtElement> {
-        private final Function<T, E> serializer;
-        private final Function<E, T> deserializer;
-    
-        public Serializer(Function<T, E> serializer, Function<E, T> deserializer) {
-            this.serializer = serializer;
-            this.deserializer = deserializer;
-        }
+    private record Serializer<T, E extends NbtElement>(Function<T, E> serializer, Function<E, T> deserializer) {
 
         @SuppressWarnings("unchecked")
-        public NbtElement serialize(Object value) {
-            return serializer.apply((T) value);
-        }
+            public NbtElement serialize(Object value) {
+                return serializer.apply((T) value);
+            }
 
-        @SuppressWarnings("unchecked")
-        public T deserialize(NbtElement value) {
-            return deserializer.apply((E) value);
+            @SuppressWarnings("unchecked")
+            public T deserialize(NbtElement value) {
+                return deserializer.apply((E) value);
+            }
         }
-    }
 
     static {
-        registry.put(byte.class, new Serializer<Byte, NbtByte>(val -> NbtByte.of(val), el -> el.byteValue()));
-        registry.put(short.class, new Serializer<Short, NbtShort>(val -> NbtShort.of(val), el -> el.shortValue()));
-        registry.put(int.class, new Serializer<Integer, NbtInt>(val -> NbtInt.of(val), el -> el.intValue()));
-        registry.put(long.class, new Serializer<Long, NbtLong>(val -> NbtLong.of(val), el -> el.longValue()));
-        registry.put(float.class, new Serializer<Float, NbtFloat>(val -> NbtFloat.of(val), el -> el.floatValue()));
-        registry.put(double.class, new Serializer<Double, NbtDouble>(val -> NbtDouble.of(val), el -> el.doubleValue()));
-        registry.put(boolean.class, new Serializer<Boolean, NbtByte>(val -> NbtByte.of(val), el -> el.byteValue() != 0));
+        registry.put(byte.class, new Serializer<Byte, NbtByte>(NbtByte::of, NbtByte::byteValue));
+        registry.put(short.class, new Serializer<Short, NbtShort>(NbtShort::of, NbtShort::shortValue));
+        registry.put(int.class, new Serializer<Integer, NbtInt>(NbtInt::of, NbtInt::intValue));
+        registry.put(long.class, new Serializer<Long, NbtLong>(NbtLong::of, NbtLong::longValue));
+        registry.put(float.class, new Serializer<Float, NbtFloat>(NbtFloat::of, NbtFloat::floatValue));
+        registry.put(double.class, new Serializer<Double, NbtDouble>(NbtDouble::of, NbtDouble::doubleValue));
+        registry.put(boolean.class, new Serializer<Boolean, NbtByte>(NbtByte::of, el -> el.byteValue() != 0));
 
         registry.put(byte[].class, new Serializer<Byte[], NbtByteArray>(val -> new NbtByteArray(ArrayUtils.toPrimitive(val)), el -> ArrayUtils.toObject(el.getByteArray())));
         registry.put(int[].class, new Serializer<Integer[], NbtIntArray>(val -> new NbtIntArray(ArrayUtils.toPrimitive(val)), el -> ArrayUtils.toObject(el.getIntArray())));
         registry.put(long[].class, new Serializer<Long[], NbtLongArray>(val -> new NbtLongArray(ArrayUtils.toPrimitive(val)), el -> ArrayUtils.toObject(el.getLongArray())));
 
-        registry.put(String.class, new Serializer<String, NbtString>(val -> NbtString.of(val), el -> el.asString()));
-        registry.put(UUID.class, new Serializer<UUID, NbtIntArray>(val -> NbtHelper.fromUuid(val), el -> NbtHelper.toUuid(el)));
+        registry.put(String.class, new Serializer<String, NbtString>(NbtString::of, NbtString::asString));
+        registry.put(UUID.class, new Serializer<UUID, NbtIntArray>(NbtHelper::fromUuid, NbtHelper::toUuid));
         registry.put(SimpleInventory.class, createInventorySerializer(54));
 
         registry.put(ChatMode.class, createEnumSerializer(ChatMode.class));
@@ -82,10 +75,10 @@ public class SerializerRegistry {
     }
 
     private static Serializer<SimpleInventory, NbtList> createInventorySerializer(int size) {
-        return new Serializer<SimpleInventory, NbtList>(val -> {
+        return new Serializer<>(val -> {
             NbtList nbtList = new NbtList();
 
-            for(int i = 0; i < val.size(); ++i) {
+            for (int i = 0; i < val.size(); ++i) {
                 ItemStack itemStack = val.getStack(i);
                 if (!itemStack.isEmpty()) {
                     NbtCompound nbtCompound = new NbtCompound();
@@ -94,16 +87,16 @@ public class SerializerRegistry {
                     nbtList.add(nbtCompound);
                 }
             }
-    
+
             return nbtList;
         }, el -> {
             SimpleInventory inventory = new SimpleInventory(size);
 
-            for(int i = 0; i < size; ++i) {
+            for (int i = 0; i < size; ++i) {
                 inventory.setStack(i, ItemStack.EMPTY);
             }
 
-            for(int i = 0; i < el.size(); ++i) {
+            for (int i = 0; i < el.size(); ++i) {
                 NbtCompound nbtCompound = el.getCompound(i);
                 int slot = nbtCompound.getByte("Slot") & 255;
                 if (slot >= 0 && slot < size) {

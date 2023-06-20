@@ -41,12 +41,6 @@ public abstract class ServerPlayerEntityMixin extends LivingEntity {
         PlayerEvents.ON_KILLED_BY_PLAYER.invoker().onKilledByPlayer((ServerPlayerEntity) (Object) this, source);
     }
 
-    @Inject(at = @At("HEAD"), method = "tick")
-    public void tick(CallbackInfo info) {
-        if (age % FactionsMod.CONFIG.POWER.POWER_TICKS.TICKS != 0 || age == 0) return;
-        PlayerEvents.ON_POWER_TICK.invoker().onPowerTick((ServerPlayerEntity) (Object) this);
-    }
-
     @Inject(method = "isInvulnerableTo", at = @At("RETURN"), cancellable = true)
     private void isInvulnerableTo(DamageSource damageSource, CallbackInfoReturnable<Boolean> info) {
         Entity source = damageSource.getAttacker();

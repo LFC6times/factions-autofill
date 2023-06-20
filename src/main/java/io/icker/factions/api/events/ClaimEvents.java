@@ -18,6 +18,12 @@ public final class ClaimEvents {
         }
     });
 
+    public static final Event<Add> THE_OTHER_ADD = EventFactory.createArrayBacked(Add.class, callbacks -> (claim) -> {
+        for (Add callback : callbacks) {
+            callback.onAdd(claim);
+        }
+    });
+
     /**
      * Called when a faction removes a claim (See {@link Claim})
      */

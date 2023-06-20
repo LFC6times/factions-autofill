@@ -18,14 +18,14 @@ import java.util.function.Predicate;
 
 
 public interface Command {
-    public LiteralCommandNode<ServerCommandSource> getNode();
-    public static final boolean permissions = FabricLoader.getInstance().isModLoaded("fabric-permissions-api-v0");
+    LiteralCommandNode<ServerCommandSource> getNode();
+    boolean permissions = FabricLoader.getInstance().isModLoaded("fabric-permissions-api-v0");
 
-    public interface Requires {
+    interface Requires {
         boolean run(User user);
 
         @SafeVarargs
-        public static Predicate<ServerCommandSource> multiple(Predicate<ServerCommandSource>... args) {
+        static Predicate<ServerCommandSource> multiple(Predicate<ServerCommandSource>... args) {
             return source -> {
                 for (Predicate<ServerCommandSource> predicate : args) {
                     if (!predicate.test(source)) return false;
@@ -35,35 +35,35 @@ public interface Command {
             };
         }
 
-        public static Predicate<ServerCommandSource> isFactionless() {
+        static Predicate<ServerCommandSource> isFactionless() {
             return require(user -> !user.isInFaction());
         }
 
-        public static Predicate<ServerCommandSource> isMember() {
+        static Predicate<ServerCommandSource> isMember() {
             return require(user -> user.isInFaction());
         }
 
-        public static Predicate<ServerCommandSource> isCommander() {
+        static Predicate<ServerCommandSource> isCommander() {
             return require(user -> user.rank == User.Rank.COMMANDER || user.rank == User.Rank.LEADER || user.rank == User.Rank.OWNER);
         }
 
-        public static Predicate<ServerCommandSource> isLeader() {
+        static Predicate<ServerCommandSource> isLeader() {
             return require(user -> user.rank == User.Rank.LEADER || user.rank == User.Rank.OWNER);
         }
 
-        public static Predicate<ServerCommandSource> isOwner() {
+        static Predicate<ServerCommandSource> isOwner() {
             return require(user -> user.rank == User.Rank.OWNER);
         }
         
-        public static Predicate<ServerCommandSource> isAdmin() {
+        static Predicate<ServerCommandSource> isAdmin() {
             return source -> source.hasPermissionLevel(FactionsMod.CONFIG.REQUIRED_BYPASS_LEVEL);
         }
 
-        public static Predicate<ServerCommandSource> hasPerms(String permission, int defaultValue) {
+        static Predicate<ServerCommandSource> hasPerms(String permission, int defaultValue) {
             return source -> !permissions || Permissions.check(source, permission, defaultValue);
         }
 
-        public static Predicate<ServerCommandSource> require(Requires req) {
+        static Predicate<ServerCommandSource> require(Requires req) {
             return source -> {
                 ServerPlayerEntity entity = source.getPlayer();
                 User user = Command.getUser(entity);
@@ -72,19 +72,19 @@ public interface Command {
         }
     }
 
-    public interface Suggests {
+    interface Suggests {
         String[] run(User user);
 
-        public static SuggestionProvider<ServerCommandSource> allFactions() {
+        static SuggestionProvider<ServerCommandSource> allFactions() {
             return allFactions(true);
         }
 
-        public static SuggestionProvider<ServerCommandSource> allFactions(boolean includeYou) {
+        static SuggestionProvider<ServerCommandSource> allFactions(boolean includeYou) {
             return suggest(user -> 
                 Faction.all()
                     .stream()
                     .filter(f -> includeYou || !user.isInFaction() || !user.getFaction().getID().equals(f.getID()))
-                    .map(f -> f.getName())
+                    .map(Faction::getName)
                     .toArray(String[]::new)
             );
         }
@@ -105,27 +105,27 @@ public interface Command {
             };
         }
 
-        public static SuggestionProvider<ServerCommandSource> openFactions() {
+        static SuggestionProvider<ServerCommandSource> openFactions() {
             return suggest(user ->
                 Faction.all()
                     .stream()
-                    .filter(f -> f.isOpen())
-                    .map(f -> f.getName())
+                    .filter(Faction::isOpen)
+                    .map(Faction::getName)
                     .toArray(String[]::new)
             );
         }
 
-        public static SuggestionProvider<ServerCommandSource> openInvitedFactions() {
+        static SuggestionProvider<ServerCommandSource> openInvitedFactions() {
             return suggest(user ->
                 Faction.all()
                     .stream()
                     .filter(f -> f.isOpen() || f.isInvited(user.getID()))
-                    .map(f -> f.getName())
+                    .map(Faction::getName)
                     .toArray(String[]::new)
             );
         }
 
-        public static <T extends Enum<T>> SuggestionProvider<ServerCommandSource> enumSuggestion (Class<T> clazz) {
+        static <T extends Enum<T>> SuggestionProvider<ServerCommandSource> enumSuggestion (Class<T> clazz) {
             return suggest(user ->
                     Arrays.stream(clazz.getEnumConstants())
                         .map(Enum::toString)
@@ -133,7 +133,7 @@ public interface Command {
             );
         }
 
-        public static SuggestionProvider<ServerCommandSource> suggest(Suggests sug) {
+        static SuggestionProvider<ServerCommandSource> suggest(Suggests sug) {
             return (context, builder) -> {
                 ServerPlayerEntity entity = context.getSource().getPlayer();
                 User user = User.get(entity.getUuid());
@@ -145,7 +145,7 @@ public interface Command {
         }
     }
 
-    public static User getUser(ServerPlayerEntity player) {
+    static User getUser(ServerPlayerEntity player) {
         User user = User.get(player.getUuid());
         if (user.getSpoof() == null) {
             return user;

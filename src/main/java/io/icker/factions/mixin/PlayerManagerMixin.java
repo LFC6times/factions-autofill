@@ -1,9 +1,6 @@
 package io.icker.factions.mixin;
 
-import io.icker.factions.FactionsMod;
 import io.icker.factions.api.persistents.User;
-import io.icker.factions.util.StyledChatCompatibility;
-import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.network.message.MessageType;
 import net.minecraft.network.message.SentMessage;
 import net.minecraft.server.PlayerManager;
@@ -14,21 +11,9 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 
 @Mixin(PlayerManager.class)
 public class PlayerManagerMixin {
-    @Redirect(method = "broadcast(Lnet/minecraft/network/message/SignedMessage;Ljava/util/function/Predicate;Lnet/minecraft/server/network/ServerPlayerEntity;Lnet/minecraft/network/message/MessageType$Parameters;)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/network/ServerPlayerEntity;sendChatMessage(Lnet/minecraft/network/message/SentMessage;ZLnet/minecraft/network/message/MessageType$Parameters;)V"))
+    @Redirect(method = "broadcast(Lnet/minecraft/network/message/SignedMessage;Ljava/util/function/Predicate;Lnet/minecraft/server/network/ServerPlayerEntity;Lnet/minecraft/network/message/MessageSourceProfile;Lnet/minecraft/network/message/MessageType$Parameters;)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/network/ServerPlayerEntity;sendChatMessage(Lnet/minecraft/network/message/SentMessage;ZLnet/minecraft/network/message/MessageType$Parameters;)V"))
     public void sendChatMessage(ServerPlayerEntity player, SentMessage message, boolean bl, MessageType.Parameters parameters) {
-        if (message instanceof SentMessage.Profileless || (FabricLoader.getInstance().isModLoaded("styledchat") && StyledChatCompatibility.isNotPlayer(message))) {
-            player.sendChatMessage(message, bl, parameters);
-            return;
-        }
-
-        User sender;
-
-        if (FabricLoader.getInstance().isModLoaded("styledchat")) {
-            sender = User.get(StyledChatCompatibility.getSender(message));
-        } else {
-            sender = User.get(((SentMessage.Chat) message).message().link().sender());
-        }
-
+        User sender = User.get(((SentMessageAccessor)((SentMessage.Chat)message)).getMessage().signedHeader().sender());
         User target = User.get(player.getUuid());
 
         if (sender.chat == User.ChatMode.GLOBAL && target.chat != User.ChatMode.FOCUS) {

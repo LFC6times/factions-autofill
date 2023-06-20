@@ -1,6 +1,7 @@
 package io.icker.factions.util;
 
 import io.icker.factions.FactionsMod;
+import io.icker.factions.api.persistents.Faction;
 import io.icker.factions.api.persistents.User;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;

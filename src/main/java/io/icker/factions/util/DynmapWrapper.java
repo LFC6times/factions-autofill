@@ -7,15 +7,19 @@ import io.icker.factions.api.persistents.Claim;
 import io.icker.factions.api.persistents.Faction;
 import io.icker.factions.api.persistents.Home;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
-import net.minecraft.registry.RegistryKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.math.ChunkPos;
+import net.minecraft.util.registry.RegistryKey;
 import net.minecraft.world.World;
 import org.dynmap.DynmapCommonAPI;
 import org.dynmap.DynmapCommonAPIListener;
 import org.dynmap.markers.*;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Objects;
+import java.util.Optional;
 
 public class DynmapWrapper {
     private DynmapCommonAPI api;
@@ -41,6 +45,7 @@ public class DynmapWrapper {
         });
 
         ClaimEvents.ADD.register(this::addClaim);
+        ClaimEvents.THE_OTHER_ADD.register(this::addClaim);
         ClaimEvents.REMOVE.register(this::removeClaim);
 
         ServerLifecycleEvents.SERVER_STARTED.register((server) -> {
@@ -80,15 +85,15 @@ public class DynmapWrapper {
     }
 
     private void addClaim(Claim claim, String factionInfo) {
-        Faction faction = claim.getFaction(); 
+        Faction faction = claim.getFaction();
         ChunkPos pos = new ChunkPos(claim.x, claim.z);
 
         AreaMarker marker = markerSet.createAreaMarker(
-            claim.getKey(), factionInfo, 
-            true, dimensionTagToID(claim.level), 
-            new double[]{pos.getStartX(), pos.getEndX() + 1}, 
-            new double[]{pos.getStartZ(), pos.getEndZ() + 1},
-            true
+                claim.getKey(), factionInfo,
+                true, dimensionTagToID(claim.level),
+                new double[]{pos.getStartX(), pos.getEndX() + 1},
+                new double[]{pos.getStartZ(), pos.getEndZ() + 1},
+                true
         );
         if (marker != null) {
             marker.setFillStyle(marker.getFillOpacity(), faction.getColor().getColorValue());
@@ -146,22 +151,24 @@ public class DynmapWrapper {
             return dimension_id;
         }
 
-        ServerWorld world = WorldUtils.getWorld(dimension_id);
+        Optional<RegistryKey<World>> worldKey = server.getWorldRegistryKeys().stream().filter(key -> Objects.equals(key.getValue(), new Identifier(dimension_id))).findAny();
 
-        if (world == null) {
+        if (worldKey.isEmpty()) {
             FactionsMod.LOGGER.error("Unable to find world");
             return dimension_id;
         }
+
+        ServerWorld world = server.getWorld(worldKey.get());
 
         return getWorldName(world);
     }
 
     private String getInfo(Faction faction) {
         return "Name: " + faction.getName() + "<br>"
-            + "Description: " + faction.getDescription() + "<br>"
-            + "Power: " + faction.getPower() + "<br>"
-            + "Number of members: " + faction.getUsers().size();// + "<br>"
-            //+ "Allies: " + Ally.getAllies(faction.getName).stream().map(ally -> ally.target).collect(Collectors.joining(", "));
+                + "Description: " + faction.getDescription() + "<br>"
+                // + "Power: " + faction.getPower() + "<br>"
+                + "Number of members: " + faction.getUsers().size();// + "<br>"
+        //+ "Allies: " + Ally.getAllies(faction.getName).stream().map(ally -> ally.target).collect(Collectors.joining(", "));
     }
 
     public void reloadAll() {

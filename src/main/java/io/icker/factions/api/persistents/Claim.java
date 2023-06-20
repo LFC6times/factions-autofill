@@ -13,7 +13,7 @@ import java.util.UUID;
 
 @Name("Claim")
 public class Claim {
-    private static final HashMap<String, Claim> STORE = Database.load(Claim.class, c -> c.getKey());
+    private static final HashMap<String, Claim> STORE = Database.load(Claim.class, Claim::getKey);
 
     @Field("X")
     public int x;
@@ -66,6 +66,11 @@ public class Claim {
     public static void add(Claim claim) {
         STORE.put(claim.getKey(), claim);
         ClaimEvents.ADD.invoker().onAdd(claim);
+    }
+
+    public static void addWithoutRerunning(Claim claim) {
+        STORE.put(claim.getKey(), claim);
+        ClaimEvents.THE_OTHER_ADD.invoker().onAdd(claim);
     }
 
     public Faction getFaction() {
